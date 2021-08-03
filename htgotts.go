@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/hegedustibor/htgo-tts/handlers"
+	"github.com/acatec/htgo-tts/handlers"
 )
 
 /**
@@ -29,25 +29,24 @@ type Speech struct {
 }
 
 // Speak downloads speech and plays it using mplayer
-func (speech *Speech) Speak(text string) error {
+func (speech *Speech) Speak(text string) (string, error) {
 
 	var err error
 	generatedHashName := speech.generateHashName(text)
 	fileName := speech.Folder + "/" + generatedHashName + ".mp3"
 
 	if err = speech.createFolderIfNotExists(speech.Folder); err != nil {
-		return err
+		return "", err
 	}
 	if err = speech.downloadIfNotExists(fileName, text); err != nil {
-		return err
+		return "", err
 	}
 
-	if speech.Handler == nil {
-		mplayer := handlers.MPlayer{}
-		return mplayer.Play(fileName)
+	if speech.Handler != nil {
+		return fileName, speech.Handler.Play(fileName)
 	}
 
-	return speech.Handler.Play(fileName)
+	return fileName, nil
 }
 
 /**
@@ -55,6 +54,7 @@ func (speech *Speech) Speak(text string) error {
  */
 func (speech *Speech) createFolderIfNotExists(folder string) error {
 	dir, err := os.Open(folder)
+
 	if os.IsNotExist(err) {
 		return os.MkdirAll(folder, 0700)
 	}
